@@ -22,6 +22,7 @@ import io.studytracker.events.EventsService;
 import io.studytracker.events.LocalEventsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.Assert;
@@ -39,8 +40,13 @@ public class EventsServiceConfiguration {
   public static class LocalEventsConfiguration {
 
     @Bean
-    public EventsService localEventsService() {
-      return new LocalEventsService();
+    public EventsService localEventsService(
+        ApplicationEventPublisher eventPublisher,
+        HostInformation hostInformation,
+        org.springframework.beans.factory.config.AutowireCapableBeanFactory beanFactory) {
+      LocalEventsService service = new LocalEventsService();
+      beanFactory.autowireBean(service);
+      return service;
     }
   }
 
@@ -68,7 +74,7 @@ public class EventsServiceConfiguration {
     @Bean
     public EventBridgeService eventBridgeService() {
       Assert.isTrue(properties.getEventbridge() != null
-              && StringUtils.hasText(properties.getEventbridge().getBusName()),
+          && StringUtils.hasText(properties.getEventbridge().getBusName()),
           "EventBridge bus name must be set with property: aws.eventbridge.bus-name");
       return new EventBridgeService(eventBridgeClient(), properties.getEventbridge().getBusName());
     }
